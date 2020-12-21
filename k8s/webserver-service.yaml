@@ -7,10 +7,9 @@ spec:
     app: go
     tier: interface
   ports:
-  - name: go
+  - name: webserver
     port: 8080
     targetPort: 8080
   selector:
-    matchLabels:
-      app: go
-      tier: interface
+    app: go
+    tier: interface

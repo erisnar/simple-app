@@ -17,8 +17,9 @@ spec:
         tier: interface
     spec:
       containers:
-      - name: nginx
+      - name: webserver
         image: "erik/go-web-app"
+        imagePullPolicy: Never
         resources:
           requests:
             cpu: 100m

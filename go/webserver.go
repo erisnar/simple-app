@@ -1,77 +1,124 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
-    "context"
-	"github.com/go-redis/redis/v8"
 	"net/http"
 	"strings"
+
+	"github.com/go-redis/redis/v8"
 )
 
+type rObject struct {
+	Key   string
+	Value string
+}
+
+func rObjectCreate(res http.ResponseWriter, req *http.Request) {
+	var r rObject
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		panic(err)
+	}
+	log.Println(string(body))
+	err = json.Unmarshal(body, &r)
+	if err != nil {
+		panic(err)
+	}
+	log.Println(r.Key)
+
+	err = setValue(r.Key, r.Value)
+	if err == nil {
+		fmt.Fprintf(res, "Wrote %s:%s to database\n", r.Key, r.Value)
+	} else {
+		fmt.Fprintf(res, "Error")
+	}
+
+}
+
+var client = rClient()
 var ctx = context.Background()
 
-
 func main() {
-
-	set("foo", "bar")
-
-	get("foo")
-
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":8080", Log(http.DefaultServeMux))
 }
-	
+
 func Log(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 		handler.ServeHTTP(w, r)
 	})
 }
-  
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Getting value of key: %s\n", r.URL.Path)
 
-	var trimPath = strings.Trim(r.URL.Path, "/")
-	var value = get(trimPath)
+func handler(res http.ResponseWriter, req *http.Request) {
 
-	fmt.Fprintf(w, "Value: %s\n", value)
+	// Example of parsing GET or POST Query Params.
+	req.ParseForm()
+
+	// Example of handling POST request.
+	switch req.Method {
+	case "POST":
+		rObjectCreate(res, req)
+	// Example of handling GET request.
+	case "GET":
+		get(res, req)
+	default:
+		bad(res, req)
+	}
 }
 
+func get(res http.ResponseWriter, req *http.Request) {
+	// Example of fetching specific Query Param.
+	fmt.Fprintf(res, "Getting value of key: %s\n", req.URL.Path)
+	var trimPath = strings.Trim(req.URL.Path, "/")
+	var value = getValue(trimPath)
 
-// add key value
-func set(key string, value string) {
-	
-	// connect to redis
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+	fmt.Fprintf(res, "Value: %s\n", value)
+}
+
+func bad(res http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(res, "404", req.Method, req.URL.Path)
+}
+
+func rClient() *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
 	})
 
-	err := rdb.Set(ctx, key, value, 0).Err()
-    if err != nil {
+	return client
+}
+
+// add key value
+func setValue(key string, value string) error {
+
+	err := client.Set(ctx, key, value, 0).Err()
+	if err != nil {
 		log.Fatal(err)
-		panic(err)
+		fmt.Println("error")
+	} else {
+		fmt.Println("Created: ", key, value)
 	}
-	fmt.Println("Created: ", key, value)
+
+	return nil
 }
 
 // get value of key
-func get(key string) (string) {
-
-	// connect to redis
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-	})
+func getValue(key string) string {
 
 	fmt.Println("Getting: ", key)
 
-    val, err := rdb.Get(ctx, key).Result()
-    if err != nil {
-		log.Fatal(err)
-        panic(err)
+	val, err := client.Get(ctx, key).Result()
+	if err != nil {
+		fmt.Println("404 Not found")
+
+		val = "404 Not found"
+	} else {
+		fmt.Println("Returned: ", val)
 	}
-	
-	fmt.Println("Returned: ", val)
 
 	return val
 }
