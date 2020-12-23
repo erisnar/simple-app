@@ -2,16 +2,7 @@
 
 In this simple project we explore Kubernetes solutions with a Go application and a redis backend database.  
 
-```mermaid
-flowchart LR
-    subgraph Kubernetes
-        redis-master
-        go-app
-    end
-
-    go-app --- redis-master
-    client  --- go-app
-```
+![mermaid](mermaid.png)
 
 # Usage
 
