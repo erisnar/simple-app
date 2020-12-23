@@ -53,20 +53,16 @@ func post(res http.ResponseWriter, req *http.Request) {
 
 // get value of key from redis
 func get(res http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(res, "Getting value of key: %s\n", req.URL.Path)
-	var trimPath = strings.Trim(req.URL.Path, "/")
-	var value = getValue(trimPath)
 
+	// trim url
+	var trimPath = strings.Trim(req.URL.Path, "/")
+	fmt.Fprintf(res, "Getting value of key: %s\n", trimPath)
+
+	// get value
+	var value = getValue(trimPath)
 	fmt.Fprintf(res, "Value: %s\n", value)
 }
 
 func bad(res http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(res, "404", req.Method, req.URL.Path)
-}
-
-func Log(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
-		handler.ServeHTTP(w, r)
-	})
+	fmt.Fprintf(res, "404\n")
 }

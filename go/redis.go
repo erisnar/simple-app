@@ -14,7 +14,7 @@ var ctx = context.Background()
 // connect to redis database
 func rClient() *redis.Client {
 	client := redis.NewClient(&redis.Options{
-		// redis-master endpoint is created by kubernetes
+		// redis-master endpoint is created
 		Addr: "redis-master:6379",
 	})
 
