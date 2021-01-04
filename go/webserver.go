@@ -30,12 +30,15 @@ func handler(res http.ResponseWriter, req *http.Request) {
 }
 
 func post(res http.ResponseWriter, req *http.Request) {
+
 	var r rObject
+
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		panic(err)
 	}
 	log.Println(string(body))
+
 	err = json.Unmarshal(body, &r)
 	if err != nil {
 		panic(err)
@@ -48,7 +51,6 @@ func post(res http.ResponseWriter, req *http.Request) {
 	} else {
 		fmt.Fprintf(res, "Error")
 	}
-
 }
 
 // get value of key from redis
